@@ -115,13 +115,15 @@ public class CommandDisruptor extends AbstractService implements Publisher {
     }
 
     private void index(CommandEvent event, long sequence, boolean endOfBatch) throws Exception {
-        event.events().parallelStream().forEach(e -> {
-            try {
-                e.entitySerializer().index(endpoint.indexFactory(), e);
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e1) {
-                log.error("Error while indexing", e);
-            }
-        });
+        if (event.events != null) {
+            event.events().parallelStream().forEach(e -> {
+                try {
+                    e.entitySerializer().index(endpoint.indexFactory(), e);
+                } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e1) {
+                    log.error("Error while indexing", e);
+                }
+            });
+        }
 
     }
 
