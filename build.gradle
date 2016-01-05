@@ -1,0 +1,57 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+repositories {
+    jcenter()
+    maven {
+        url  "http://dl.bintray.com/eventreducer/org.eventreducer"
+    }
+}
+
+dependencies {
+    // The production code uses the SLF4J logging API at compile time
+    compile 'org.slf4j:slf4j-api:1.7.7'
+
+    // Removes boilerplate code
+    compile 'org.projectlombok:lombok:1.16.6'
+
+    // Useful utilities
+    compile 'com.google.guava:guava:18.0'
+    compile 'org.javatuples:javatuples:1.2'
+
+    // Hybrid Logical Clock
+    compile 'org.eventreducer:eventreducer-hlc:0.1'
+
+    // For annotation processors
+    compile 'com.google.auto.service:auto-service:1.0-rc2'
+    compile 'com.google.auto:auto-common:0.5'
+    compile 'com.squareup:javapoet:1.4.0'
+
+    // For annotations
+    compile 'org.reflections:reflections:0.9.10'
+
+    // Cryptographic primitives
+    compile 'org.bouncycastle:bcprov-jdk15on:1.54'
+
+    // Data indexing
+    compile 'com.googlecode.cqengine:cqengine:2.1.0'
+
+    // Message processing
+    compile 'com.lmax:disruptor:3.3.2'
+
+    // Declare the dependency for your favourite test framework you want to use in your tests.
+    // TestNG is also supported by the Gradle Test task. Just change the
+    // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
+    // 'test.useTestNG()' to your build script.
+    testCompile 'junit:junit:4.12'
+    testCompile 'com.googlecode.junit-toolbox:junit-toolbox:2.2'
+
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    testCompile 'org.powermock:powermock:1.6.4'
+    testCompile 'org.powermock:powermock-modules:1.6.4'
+    testCompile 'org.powermock:powermock-module-junit4:1.6.4'
+    testCompile 'org.powermock:powermock-mockito-release-full:1.6.4'
+    testCompile 'org.powermock:powermock-api:1.6.4'
+    testCompile 'org.powermock:powermock-api-mockito:1.6.4'
+    testCompile 'org.powermock:powermock-module-test-mockito-junit4:1.6.4'
+}
