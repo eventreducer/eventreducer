@@ -166,6 +166,31 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                     return new byte[]{7};
                 case DECLARED:
                     TypeElement typeElement = (TypeElement) processingEnv.getTypeUtils().asElement(t);
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Byte")) {
+                        return new byte[]{0};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Short")) {
+                        return new byte[]{1};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Integer")) {
+                        return new byte[]{2};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Long")) {
+                        return new byte[]{3};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Float")) {
+                        return new byte[]{4};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Double")) {
+                        return new byte[]{5};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Boolean")) {
+                        return new byte[]{6};
+                    }
+                    if (typeElement.getQualifiedName().contentEquals("java.lang.Character")) {
+                        return new byte[]{7};
+                    }
+
                     if (typeElement.getKind() == ElementKind.ENUM) {
                         return new byte[]{(byte) 254};
                     }
