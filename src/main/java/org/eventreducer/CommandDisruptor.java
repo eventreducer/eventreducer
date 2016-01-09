@@ -98,7 +98,6 @@ public class CommandDisruptor extends AbstractService implements Publisher {
     private void extractEvents(CommandEvent event, long sequence, boolean endOfBatch) throws Exception {
         try {
             event.events(event.command().events(endpoint));
-            endpoint.journal().journal(event.events());
         } catch (Exception e) {
             throw new EventExtactionException(e, event.command());
         }
