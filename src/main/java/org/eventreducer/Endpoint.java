@@ -34,6 +34,7 @@ public class Endpoint extends AbstractService {
 
     @Override
     protected void doStart() {
+        journal().prepareIndices(indexFactory());
         commandDisruptor.startAsync().awaitRunning();
         notifyStarted();
     }

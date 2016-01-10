@@ -35,4 +35,5 @@ public abstract class Journal implements EndpointComponent {
     protected abstract void journal(List<Event> events);
     public abstract long size();
 
+    public void prepareIndices(IndexFactory indexFactory) {}
 }
