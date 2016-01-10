@@ -7,8 +7,6 @@ import org.eventreducer.hlc.HybridTimestamp;
 import org.eventreducer.hlc.PhysicalTimeProvider;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 public abstract class Journal implements EndpointComponent {
 
@@ -36,14 +34,5 @@ public abstract class Journal implements EndpointComponent {
 
     protected abstract void journal(List<Event> events);
     public abstract long size();
-
-    public abstract Lock lock(Object lock);
-
-    public <T>T withLock(Object lock, Supplier<T> supplier) {
-        Lock l = lock(lock);
-        T t = supplier.get();
-        l.unlock();
-        return t;
-    }
 
 }

@@ -2,9 +2,9 @@ package org.eventreducer;
 
 import com.google.common.util.concurrent.AbstractService;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.eventreducer.annotations.*;
 import org.eventreducer.annotations.Serializer;
 import org.reflections.Reflections;
 
@@ -18,6 +18,8 @@ public class Endpoint extends AbstractService {
     private Journal journal;
     @Getter
     private IndexFactory indexFactory;
+    @Getter @Setter
+    private LockFactory lockFactory;
 
     private CommandDisruptor commandDisruptor;
 
