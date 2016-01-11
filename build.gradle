@@ -3,10 +3,14 @@ apply plugin: 'idea'
 
 repositories {
     jcenter()
-    maven {
-        url  "http://dl.bintray.com/eventreducer/org.eventreducer"
-    }
 }
+
+try {
+    project.ext.hlc = project(':eventreducer:hlc')
+} catch (UnknownProjectException e) {
+    project.ext.hlc = project(':hlc')
+}
+
 
 dependencies {
     // The production code uses the SLF4J logging API at compile time
@@ -20,7 +24,7 @@ dependencies {
     compile 'org.javatuples:javatuples:1.2'
 
     // Hybrid Logical Clock
-    compile 'org.eventreducer:eventreducer-hlc:0.1'
+    compile project.ext.hlc
 
     // For annotation processors
     compile 'com.google.auto.service:auto-service:1.0-rc2'

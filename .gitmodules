@@ -1,0 +1,3 @@
+[submodule "hlc"]
+	path = hlc
+	url = https://github.com/EventReducer/hlc

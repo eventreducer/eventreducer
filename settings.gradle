@@ -9,4 +9,5 @@
  * in the user guide at http://gradle.org/docs/2.3/userguide/multi_project_builds.html
  */
 
+include 'hlc'
 rootProject.name = 'eventreducer'
