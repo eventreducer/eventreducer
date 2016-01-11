@@ -14,6 +14,7 @@ import java.util.Set;
 @Slf4j
 public class Endpoint extends AbstractService {
 
+    private String packagePrefix;
     @Getter
     private Journal journal;
     @Getter
@@ -25,6 +26,10 @@ public class Endpoint extends AbstractService {
 
 
     public Endpoint() {
+        commandDisruptor = new CommandDisruptor(this);
+    }
+    public Endpoint(String packagePrefix) {
+        this.packagePrefix = packagePrefix;
         commandDisruptor = new CommandDisruptor(this);
     }
 
@@ -53,10 +58,11 @@ public class Endpoint extends AbstractService {
 
     public Endpoint indexFactory(IndexFactory indexFactory) {
         this.indexFactory = indexFactory;
-        Set<Class<?>> serializers = new Reflections().getTypesAnnotatedWith(Serializer.class);
+        Reflections reflections = packagePrefix == null ? new Reflections() : new Reflections(packagePrefix);
+        Set<Class<? extends org.eventreducer.Serializer>> serializers = reflections.getSubTypesOf(org.eventreducer.Serializer.class);
         serializers.parallelStream().forEach(t -> {
             try {
-                org.eventreducer.Serializer s = (org.eventreducer.Serializer) t.newInstance();
+                org.eventreducer.Serializer s = t.newInstance();
                 s.configureIndices(indexFactory);
             } catch (InstantiationException | IllegalAccessException e) {
                 log.error("Error while initializing index factory", e);
