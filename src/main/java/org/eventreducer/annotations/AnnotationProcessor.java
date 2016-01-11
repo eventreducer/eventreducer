@@ -60,7 +60,7 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
 
         @Override
         public Set<? extends Class<? extends Annotation>> annotations() {
-            return ImmutableSet.of(Property.class, Index.class);
+            return ImmutableSet.of(Property.class, Index.class, Serializable.class);
         }
 
         @Override
@@ -273,7 +273,12 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                         indices.put(enclosingClass, new LinkedList<>());
                     }
                     indices.get(enclosingClass).add(Pair.with(element.getAnnotation(Index.class), element));
-
+                }
+                if (entry.getKey() == Serializable.class) {
+                    TypeElement enclosingClass = (TypeElement) entry.getValue();
+                    if (!properties.containsKey(enclosingClass)) {
+                        properties.put(enclosingClass, new LinkedList<>());
+                    }
                 }
             });
         }
