@@ -3,6 +3,7 @@ package org.eventreducer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.commons.net.ntp.TimeStamp;
 import org.eventreducer.hlc.HybridTimestamp;
 import org.eventreducer.hlc.PhysicalTimeProvider;
 
@@ -24,7 +25,7 @@ public abstract class Journal implements EndpointComponent {
                 forEachOrdered(event -> {
                     event.
                             command(command).
-                            timestamp(timestamp.update());
+                            timestamp(new TimeStamp(timestamp.update()));
                 });
         journal(events);
         events.stream().forEachOrdered(event -> {

@@ -3,6 +3,7 @@ package org.eventreducer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.commons.net.ntp.TimeStamp;
 
 import java.util.UUID;
 /**
@@ -14,7 +15,7 @@ public abstract class Event extends Serializable {
     private UUID uuid = UUID.randomUUID();
 
     @Getter @Setter @Accessors(fluent = true)
-    private long timestamp;
+    private TimeStamp timestamp;
 
     @Getter @Setter @Accessors(fluent = true)
     private Event event;
