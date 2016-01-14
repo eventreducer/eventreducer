@@ -6,6 +6,7 @@ import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.EventHandlerGroup;
+import com.lmax.disruptor.util.DaemonThreadFactory;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,9 +18,6 @@ import org.javatuples.Triplet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -158,10 +156,8 @@ public class CommandDisruptor extends AbstractService implements Publisher {
     @Override
     @SneakyThrows
     protected void doStart() {
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-
-        disruptor = new Disruptor<>(CommandEvent::new, RING_BUFFER_SIZE, executor);
-        disruptor.handleExceptionsWith(new CommandEventExceptionHandler());
+        disruptor = new Disruptor<>(CommandEvent::new, RING_BUFFER_SIZE, DaemonThreadFactory.INSTANCE);
+        disruptor.setDefaultExceptionHandler(new CommandEventExceptionHandler());
 
 
         List<EventHandler<CommandEvent>> eventHandlers =
@@ -174,16 +170,6 @@ public class CommandDisruptor extends AbstractService implements Publisher {
         }
 
         ringBuffer = disruptor.start();
-
-        // FIXME: it's an ugly hack to make sure all event processors have been started
-        // as there is no way to learn this from Disruptor.
-        // This is still not perfect as having threads does not guarantee event processors are
-        // fully operational, but it is better than nothing
-        // Issue referenced in https://github.com/LMAX-Exchange/disruptor/issues/142
-        Thread.sleep(100);
-        while (executor.getActiveCount() < eventHandlers.size()) {
-            Thread.sleep(100);
-        }
 
         notifyStarted();
     }
