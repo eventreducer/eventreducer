@@ -117,6 +117,7 @@ public class CommandDisruptor extends AbstractService implements Publisher {
 
     private void index(CommandEvent event, long sequence, boolean endOfBatch) throws Exception {
         if (event.events != null) {
+            event.command().entitySerializer().index(endpoint.indexFactory(), event.command());
             event.events().parallelStream().forEach(e -> {
                 try {
                     e.entitySerializer().index(endpoint.indexFactory(), e);

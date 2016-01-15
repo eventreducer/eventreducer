@@ -7,6 +7,7 @@ import org.eventreducer.annotations.Property;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Command is a request for changes in the domain. Unlike an event,
@@ -20,6 +21,9 @@ public abstract class Command extends Serializable {
 
     @Getter @Setter
     public Object trace;
+
+    @Getter @Setter @Accessors(fluent = true)
+    private UUID uuid = UUID.randomUUID();
 
     /**
      * Returns a list of events that should be recorded

@@ -10,13 +10,15 @@ import java.util.UUID;
 public class MemoryJournal extends Journal {
 
     private Map<UUID, Event> storage = new HashMap<>();
+    private Map<UUID, Command> commands = new HashMap<>();
 
     public MemoryJournal(PhysicalTimeProvider physicalTimeProvider) {
         super(physicalTimeProvider);
     }
 
     @Override
-    protected void journal(List<Event> events) {
+    protected void journal(Command command, List<Event> events) {
+        commands.put(command.uuid(), command);
         events.stream().
                 forEachOrdered(event -> storage.put(event.uuid(), event));
     }

@@ -27,13 +27,13 @@ public abstract class Journal implements EndpointComponent {
                             command(command).
                             timestamp(new TimeStamp(timestamp.update()));
                 });
-        journal(events);
+        journal(command, events);
         events.stream().forEachOrdered(event -> {
             event.onEventJournaled(endpoint);
         });
     }
 
-    protected abstract void journal(List<Event> events);
+    protected abstract void journal(Command command, List<Event> events);
     public abstract long size();
 
     public void prepareIndices(IndexFactory indexFactory) {}
