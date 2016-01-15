@@ -64,7 +64,7 @@ public class CommandDisruptor extends AbstractService implements Publisher {
      * This exception wraps exceptions happened during event extraction step
      * and include the original command for reference
      */
-    public static class EventExtactionException extends Exception {
+    public static class EventExtractionException extends Exception {
 
         /**
          * Original exception
@@ -77,7 +77,7 @@ public class CommandDisruptor extends AbstractService implements Publisher {
         @Getter
         private final Command command;
 
-        public EventExtactionException(Throwable throwable, Command command) {
+        public EventExtractionException(Throwable throwable, Command command) {
             this.throwable = throwable;
             this.command = command;
         }
@@ -101,7 +101,7 @@ public class CommandDisruptor extends AbstractService implements Publisher {
         try {
             event.events(event.command().events(endpoint));
         } catch (Exception e) {
-            throw new EventExtactionException(e, event.command());
+            throw new EventExtractionException(e, event.command());
         }
     }
 
@@ -111,7 +111,7 @@ public class CommandDisruptor extends AbstractService implements Publisher {
                 endpoint.journal().save(event.command(), event.events());
             }
         } catch (Exception e) {
-            throw new EventExtactionException(e, event.command());
+            throw new EventExtractionException(e, event.command());
         }
     }
 
