@@ -21,12 +21,15 @@ public abstract class Journal implements EndpointComponent {
     }
 
     public void save(Command command, List<Event> events) throws Exception {
+        TimeStamp commandTimestamp = new TimeStamp(timestamp.update());
+        command.timestamp(commandTimestamp);
         events.stream().
                 forEachOrdered(event -> {
                     event.
                             command(command).
                             timestamp(new TimeStamp(timestamp.update()));
                 });
+
         if (events.isEmpty() && !(command instanceof EphemeralCommand)) {
             journal(command, events);
         }

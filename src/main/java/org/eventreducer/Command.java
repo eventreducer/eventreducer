@@ -3,6 +3,7 @@ package org.eventreducer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.commons.net.ntp.TimeStamp;
 import org.eventreducer.annotations.Property;
 
 import java.util.List;
@@ -24,6 +25,9 @@ public abstract class Command extends Serializable {
 
     @Getter @Setter @Accessors(fluent = true)
     private UUID uuid = UUID.randomUUID();
+
+    @Getter @Setter @Accessors(fluent = true)
+    private TimeStamp timestamp;
 
     /**
      * Returns a list of events that should be recorded
