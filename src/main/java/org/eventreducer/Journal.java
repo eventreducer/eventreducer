@@ -27,7 +27,9 @@ public abstract class Journal implements EndpointComponent {
                             command(command).
                             timestamp(new TimeStamp(timestamp.update()));
                 });
-        journal(command, events);
+        if (events.isEmpty() && !(command instanceof EphemeralCommand)) {
+            journal(command, events);
+        }
         events.stream().forEachOrdered(event -> {
             event.onEventJournaled(endpoint);
         });
