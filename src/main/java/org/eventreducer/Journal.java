@@ -30,7 +30,7 @@ public abstract class Journal implements EndpointComponent {
                             timestamp(new TimeStamp(timestamp.update()));
                 });
 
-        if (events.isEmpty() && !(command instanceof EphemeralCommand)) {
+        if (!(command instanceof EphemeralCommand)) {
             journal(command, events);
         }
         events.stream().forEachOrdered(event -> {
