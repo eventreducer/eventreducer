@@ -1,5 +1,7 @@
 package org.eventreducer;
 
+import lombok.Getter;
+
 import java.util.concurrent.Semaphore;
 
 public class MemoryLockFactory extends LockFactory {
@@ -13,6 +15,8 @@ public class MemoryLockFactory extends LockFactory {
 
     static class MemoryLock implements Lock {
         private final Semaphore semaphore;
+        @Getter
+        private boolean locked = true;
 
         public MemoryLock(Semaphore semaphore) {
             this.semaphore = semaphore;
@@ -20,6 +24,7 @@ public class MemoryLockFactory extends LockFactory {
 
         @Override
         public void unlock() {
+            locked = false;
             semaphore.release();
         }
 
