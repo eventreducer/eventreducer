@@ -9,8 +9,8 @@ import java.util.UUID;
 
 public class MemoryJournal extends Journal {
 
-    private Map<UUID, Event> storage = new HashMap<>();
-    private Map<UUID, Command> commands = new HashMap<>();
+    protected Map<UUID, Event> storage = new HashMap<>();
+    protected Map<UUID, Command> commands = new HashMap<>();
 
     public MemoryJournal(PhysicalTimeProvider physicalTimeProvider) {
         super(physicalTimeProvider);

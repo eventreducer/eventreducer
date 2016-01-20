@@ -22,7 +22,7 @@ import static org.eventreducer.IndexFactory.IndexFeature.*;
 
 public class MemoryIndexFactory extends IndexFactory {
 
-    private Map<String, IndexedCollection> indexedCollections = new ConcurrentHashMap<>();
+    protected Map<String, IndexedCollection> indexedCollections = new ConcurrentHashMap<>();
 
     @Override
     protected List<Triplet<String, IndexFeature[], Function<Attribute, Index>>> getIndexMatrix() {
