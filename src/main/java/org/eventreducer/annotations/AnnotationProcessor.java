@@ -82,10 +82,23 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                             initializer("$T.getDecoder().decode($S)", Base64.class, Base64.getEncoder().encodeToString(ripemdHash)).
                             build();
 
-                    MethodSpec hash = MethodSpec.methodBuilder("hash").
+                    MethodSpec.Builder toString = MethodSpec.methodBuilder("toString").
                             addModifiers(Modifier.PUBLIC).
-                            returns(byte[].class).
-                            addCode("return this.hash;").build();
+                            addParameter(ClassName.get(enclosing), "o").
+                            returns(String.class).
+                            addCode("String output = $S;", "<# " + enclosing.getSimpleName().toString());
+
+                    for (Element element : elements) {
+                        toString.addCode("output += \" \" + $S + \"=\" + o.$L;", element.getSimpleName().toString(), element.getSimpleName().toString());
+                    }
+
+                    toString.addCode("output += \">\"; return output;");
+
+
+                    MethodSpec hash = MethodSpec.methodBuilder("hash").
+                    addModifiers(Modifier.PUBLIC).
+                    returns(byte[].class).
+                    addCode("return this.hash;").build();
 
                     MethodSpec getIndex = MethodSpec.methodBuilder("getIndex").
                             addModifiers(Modifier.PUBLIC).
@@ -127,6 +140,7 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                             addAnnotation(AnnotationSpec.builder(Serializer.class).addMember("value", "$L.class", enclosing.getQualifiedName()).build()).
                             superclass(ParameterizedTypeName.get(ClassName.get(org.eventreducer.Serializer.class), ClassName.get(enclosing))).
                             addField(hashField).
+                            addMethod(toString.build()).
                             addMethod(hash).
                             addMethod(getIndex).
                             addMethod(index).
