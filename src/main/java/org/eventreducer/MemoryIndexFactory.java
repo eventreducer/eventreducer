@@ -42,7 +42,7 @@ public class MemoryIndexFactory extends IndexFactory {
     public <O> IndexedCollection<O> getIndexedCollection(Class<O> klass) {
         IndexedCollection existingCollection = indexedCollections.get(klass.getName());
         if (existingCollection == null) {
-            ConcurrentIndexedCollection<O> indexedCollection = new ConcurrentIndexedCollection<>();
+            ConcurrentIndexedCollection<O> indexedCollection = new ConcurrentIndexedCollection<>(new JournalPersistence(getJournal(), klass));
             indexedCollections.put(klass.getName(), indexedCollection);
             return indexedCollection;
         } else {

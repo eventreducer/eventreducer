@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.eventreducer.annotations.Serializer;
 import org.reflections.Reflections;
 
 import java.util.Set;
@@ -39,7 +38,6 @@ public class Endpoint extends AbstractService {
 
     @Override
     protected void doStart() {
-        journal().prepareIndices(indexFactory());
         commandDisruptor.startAsync().awaitRunning();
         notifyStarted();
     }
@@ -57,6 +55,7 @@ public class Endpoint extends AbstractService {
     }
 
     public Endpoint indexFactory(IndexFactory indexFactory) {
+        indexFactory.setJournal(journal());
         this.indexFactory = indexFactory;
         Reflections reflections = packagePrefix == null ? new Reflections() : new Reflections(packagePrefix);
         Set<Class<? extends org.eventreducer.Serializer>> serializers = reflections.getSubTypesOf(org.eventreducer.Serializer.class);

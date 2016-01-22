@@ -3,6 +3,7 @@ package org.eventreducer;
 import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.Index;
+import com.googlecode.cqengine.persistence.Persistence;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -10,9 +11,13 @@ import org.javatuples.Triplet;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 public abstract class IndexFactory implements EndpointComponent {
+
+    @Getter @Setter
+    private Journal journal;
 
     @Getter
     @Setter

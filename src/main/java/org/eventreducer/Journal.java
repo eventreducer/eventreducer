@@ -7,7 +7,10 @@ import org.apache.commons.net.ntp.TimeStamp;
 import org.eventreducer.hlc.HybridTimestamp;
 import org.eventreducer.hlc.PhysicalTimeProvider;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public abstract class Journal implements EndpointComponent {
 
@@ -41,5 +44,9 @@ public abstract class Journal implements EndpointComponent {
     protected abstract void journal(Command command, List<Event> events);
     public abstract long size();
 
-    public void prepareIndices(IndexFactory indexFactory) {}
+    public abstract Optional<Event> findEvent(UUID uuid);
+    public abstract Optional<Command> findCommand(UUID uuid);
+
+    public abstract Iterator<Event> eventIterator(Class<? extends Event> klass);
+    public abstract Iterator<Command> commandIterator(Class<? extends Command> klass);
 }

@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Event is a statement of a fact that has occurred once written to a journal.
  */
-public abstract class Event extends Serializable {
+public abstract class Event extends Serializable implements Identifiable {
 
     @Getter @Setter @Accessors(fluent = true)
     private UUID uuid = UUID.randomUUID();

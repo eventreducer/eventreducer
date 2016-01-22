@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.net.ntp.TimeStamp;
-import org.eventreducer.annotations.Property;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +17,7 @@ import java.util.UUID;
  * OrderConfirmed event being produced.
  */
 @Accessors(fluent = true)
-public abstract class Command extends Serializable {
+public abstract class Command extends Serializable implements Identifiable {
 
     @Getter @Setter
     public Object trace;
