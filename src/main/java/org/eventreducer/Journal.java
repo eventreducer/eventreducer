@@ -42,7 +42,7 @@ public abstract class Journal implements EndpointComponent {
     }
 
     protected abstract void journal(Command command, List<Event> events);
-    public abstract long size();
+    public abstract long size(Class<? extends Identifiable> klass);
 
     public abstract Optional<Event> findEvent(UUID uuid);
     public abstract Optional<Command> findCommand(UUID uuid);

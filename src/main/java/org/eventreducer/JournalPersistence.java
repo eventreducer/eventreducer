@@ -74,7 +74,7 @@ public class JournalPersistence<O extends Identifiable> implements Persistence<O
 
         @Override
         public int size() {
-            return (int) journal.size();
+            return (int) journal.size(klass);
         }
 
         @Override

@@ -3,6 +3,7 @@ package org.eventreducer;
 import org.eventreducer.hlc.PhysicalTimeProvider;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MemoryJournal extends Journal {
 
@@ -21,8 +22,9 @@ public class MemoryJournal extends Journal {
     }
 
     @Override
-    public long size() {
-        return storage.size() + commands.size();
+    public long size(Class<? extends Identifiable> klass) {
+        return storage.values().stream().filter(e -> klass.isAssignableFrom(e.getClass())).collect(Collectors.toList()).size() +
+               commands.values().stream().filter(e -> klass.isAssignableFrom(e.getClass())).collect(Collectors.toList()).size();
     }
 
     @Override

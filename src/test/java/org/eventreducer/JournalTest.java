@@ -56,9 +56,9 @@ public class JournalTest {
     @SneakyThrows
     public void test() {
         TestCommand command = new TestCommand();
-        assertEquals(0, journal.size());
+        assertEquals(0, journal.size(TestCommand.class));
         journal.save(command, command.events(journal.endpoint()));
-        assertEquals(1, journal.size());
+        assertEquals(1, journal.size(TestCommand.class));
     }
 
 }
