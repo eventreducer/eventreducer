@@ -1,4 +1,4 @@
 package org.eventreducer;
 
-public class EphemeralCommand extends EventlessCommand {
+public class EphemeralCommand<T> extends EventlessCommand<T> {
 }

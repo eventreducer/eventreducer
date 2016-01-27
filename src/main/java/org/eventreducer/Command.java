@@ -17,7 +17,7 @@ import java.util.UUID;
  * OrderConfirmed event being produced.
  */
 @Accessors(fluent = true)
-public abstract class Command extends Serializable implements Identifiable {
+public abstract class Command<T> extends Serializable implements Identifiable {
 
     @Getter @Setter
     public Object trace;
@@ -54,7 +54,7 @@ public abstract class Command extends Serializable implements Identifiable {
      * @param events list of event envelops
      * @return Optional "response" representation (any object)
      */
-    public Optional onCommandCompletion(Endpoint endpoint, List<Event> events) {
+    public Optional<T> onCommandCompletion(Endpoint endpoint, List<Event> events) {
         return Optional.empty();
     }
 }
