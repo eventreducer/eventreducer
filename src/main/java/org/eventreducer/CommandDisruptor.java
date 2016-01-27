@@ -137,10 +137,10 @@ public class CommandDisruptor extends AbstractService implements Publisher {
     }
 
 
-    private void translate(CommandEvent event, long sequence, Triplet<Command, BiConsumer<Optional, List<Event>>, Consumer<Throwable>> message) {
+    private <T> void translate(CommandEvent event, long sequence, Triplet<Command<T>, BiConsumer<Optional<T>, List<Event>>, Consumer<Throwable>> message) {
         event.
             command(message.getValue0()).
-            completionHandler(message.getValue1()).
+            completionHandler(((optional, events) -> message.getValue1().accept(optional, events))).
             exceptionHandler(message.getValue2());
     }
 
@@ -150,7 +150,7 @@ public class CommandDisruptor extends AbstractService implements Publisher {
      * @param completionHandler Completion handler to be used once the command has been successfully processed
      * @param exceptionHandler Exception handler to be used if an exception get thrown while processing the command
      */
-    public void publish(Command command, BiConsumer<Optional, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler) {
+    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler) {
         ringBuffer.publishEvent(this::translate, Triplet.with(command, completionHandler, exceptionHandler));
     }
 

@@ -11,9 +11,9 @@ import java.util.function.Consumer;
 
 public interface Publisher {
 
-    void publish(Command command, BiConsumer<Optional, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler);
+    <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler);
 
-    default void publish(Command command, BiConsumer<Optional, List<Event>> completionHandler) {
+    default <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler) {
         publish(command, completionHandler, throwable -> {});
     }
 
@@ -21,17 +21,17 @@ public interface Publisher {
         publish(command,  (optional, events) -> {}, exceptionHandler);
     }
 
-    default CompletableFuture<CommandPublished> publish(Command command) {
-        CompletableFuture<CommandPublished> future = new CompletableFuture<>();
-        publish(command, (optional, events) ->
-                future.complete(new CommandPublished(optional, events)), future::completeExceptionally);
+    default <T> CompletableFuture<CommandPublished<T>> publish(Command<T> command) {
+        CompletableFuture<CommandPublished<T>> future = new CompletableFuture<>();
+        publish(command, (Optional<T> optional, List<Event> events) ->
+                future.complete(new CommandPublished<>(optional, events)), future::completeExceptionally);
         return future;
     }
 
     @AllArgsConstructor
-    class CommandPublished {
+    class CommandPublished<T> {
         @Getter
-        private Optional result;
+        private Optional<T> result;
         @Getter
         private List<Event> events;
     }
