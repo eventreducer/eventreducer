@@ -1,11 +1,10 @@
 package org.eventreducer;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.stream.Stream;
 
 public class EventlessCommand<T> extends Command<T> {
     @Override
-    public final List<Event> events(Endpoint endpoint) throws Exception {
-        return Collections.emptyList();
+    public final Stream<Event> events(Endpoint endpoint) throws Exception {
+        return Stream.empty();
     }
 }

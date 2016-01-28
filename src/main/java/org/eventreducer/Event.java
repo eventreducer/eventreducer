@@ -23,6 +23,4 @@ public abstract class Event extends Serializable implements Identifiable {
     @Getter @Setter @Accessors(fluent = true)
     private Command command;
 
-    public void onEventJournaled(Endpoint storage) {}
-
 }

@@ -3,7 +3,6 @@ package org.eventreducer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -11,9 +10,9 @@ import java.util.function.Consumer;
 
 public interface Publisher {
 
-    <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler);
+    <T> void publish(Command<T> command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler);
 
-    default <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler) {
+    default <T> void publish(Command<T> command, BiConsumer<Optional<T>, Long> completionHandler) {
         publish(command, completionHandler, throwable -> {});
     }
 
@@ -23,7 +22,7 @@ public interface Publisher {
 
     default <T> CompletableFuture<CommandPublished<T>> publish(Command<T> command) {
         CompletableFuture<CommandPublished<T>> future = new CompletableFuture<>();
-        publish(command, (Optional<T> optional, List<Event> events) ->
+        publish(command, (Optional<T> optional, Long events) ->
                 future.complete(new CommandPublished<>(optional, events)), future::completeExceptionally);
         return future;
     }
@@ -33,6 +32,6 @@ public interface Publisher {
         @Getter
         private Optional<T> result;
         @Getter
-        private List<Event> events;
+        private long events;
     }
 }

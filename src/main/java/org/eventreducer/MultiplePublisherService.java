@@ -9,7 +9,6 @@ import com.google.common.util.concurrent.ServiceManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
@@ -48,7 +47,7 @@ public class MultiplePublisherService extends AbstractService implements Publish
     }
 
     @Override
-    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler) {
+    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler) {
         UUID uuid = command.uuid();
         HashCode hashCode = HashCode.fromBytes(Bytes.concat(Longs.toByteArray(uuid.getMostSignificantBits()), Longs.toByteArray(uuid.getLeastSignificantBits())));
         int bucket = Hashing.consistentHash(hashCode, publishers.length);

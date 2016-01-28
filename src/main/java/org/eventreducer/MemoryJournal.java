@@ -4,6 +4,7 @@ import org.eventreducer.hlc.PhysicalTimeProvider;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MemoryJournal extends Journal {
 
@@ -15,10 +16,9 @@ public class MemoryJournal extends Journal {
     }
 
     @Override
-    protected void journal(Command command, List<Event> events) {
+    protected long journal(Command command, Stream<Event> events) {
         commands.put(command.uuid(), command);
-        events.stream().
-                forEachOrdered(event -> storage.put(event.uuid(), event));
+        return events.map(event -> storage.put(event.uuid(), event)).count();
     }
 
     @Override
@@ -51,6 +51,11 @@ public class MemoryJournal extends Journal {
     @Override
     public Iterator<Command> commandIterator(Class<? extends Command> klass) {
         return commands.values().stream().filter(v -> klass.isAssignableFrom(v.getClass())).iterator();
+    }
+
+    @Override
+    public Stream<Event> events(Command command) {
+        return storage.values().stream().filter(e -> e.command().uuid().equals(command.uuid()));
     }
 
 

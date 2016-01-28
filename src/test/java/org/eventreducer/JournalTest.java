@@ -11,6 +11,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -44,8 +45,8 @@ public class JournalTest {
 
     private static class TestCommand extends Command {
         @Override
-        public List<Event> events(Endpoint endpoint) throws Exception {
-            return Arrays.asList(new TestEvent());
+        public Stream<Event> events(Endpoint endpoint) throws Exception {
+            return Stream.of(new TestEvent());
         }
     }
 

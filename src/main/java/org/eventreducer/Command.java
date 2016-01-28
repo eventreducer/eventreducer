@@ -5,9 +5,9 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.net.ntp.TimeStamp;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Command is a request for changes in the domain. Unlike an event,
@@ -29,14 +29,14 @@ public abstract class Command<T> extends Serializable implements Identifiable {
     private TimeStamp timestamp;
 
     /**
-     * Returns a list of events that should be recorded
+     * Returns a stream of events that should be recorded
      *
      * @param endpoint Configured data access endpoint
-     * @return list of events
+     * @return stream of events
      * @throws Exception if the command is to be rejected, an exception has to be thrown. In this case, no events will
      *         be recorded
      */
-    public abstract List<Event> events(Endpoint endpoint) throws Exception;
+    public abstract Stream<Event> events(Endpoint endpoint) throws Exception;
 
     /**
      * Once all events are recorded, this callback will be invoked with a list of
@@ -54,7 +54,7 @@ public abstract class Command<T> extends Serializable implements Identifiable {
      * @param events list of event envelops
      * @return Optional "response" representation (any object)
      */
-    public Optional<T> onCommandCompletion(Endpoint endpoint, List<Event> events) {
+    public Optional<T> onCommandCompletion(Endpoint endpoint, long events) {
         return Optional.empty();
     }
 }

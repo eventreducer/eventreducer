@@ -1,7 +1,5 @@
 package org.eventreducer;
 
-import lombok.Getter;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Slf4j
 public class SinglePublisherService extends AbstractService implements PublisherService {
@@ -44,7 +45,7 @@ public class SinglePublisherService extends AbstractService implements Publisher
          * Completion handler, supplied during publishing
          */
         @Getter @Setter
-        private BiConsumer<Optional, List<Event>> completionHandler;
+        private BiConsumer<Optional, Long> completionHandler;
         /**
          * Exception handler, supplied during publishing
          */
@@ -54,7 +55,10 @@ public class SinglePublisherService extends AbstractService implements Publisher
          * EventEnvelopes extracted from command events
          */
         @Getter @Setter
-        private List<Event> events;
+        private Stream<Event> events;
+
+        @Getter @Setter
+        private long eventsJournalled = -1;
     }
 
     public static final int RING_BUFFER_SIZE = 1024;
@@ -71,24 +75,22 @@ public class SinglePublisherService extends AbstractService implements Publisher
 
     private void journal(CommandEvent event, long sequence, boolean endOfBatch) throws Exception {
         try {
-            if (event.events() != null) {
-                endpoint.journal().save(event.command(), event.events());
-            }
+            event.eventsJournalled(endpoint.journal().save(event.command(), event.events()));
         } catch (Exception e) {
-            throw new EventExtractionException(e, event.command());
+            throw new EventJournallingException(e, event.command());
         }
     }
 
     private void index(CommandEvent event, long sequence, boolean endOfBatch) throws Exception {
-        if (event.events != null) {
-            event.command().entitySerializer().index(endpoint.indexFactory(), event.command());
-            event.events().parallelStream().forEach(e -> {
+        if (event.eventsJournalled() != -1) {
+            endpoint.journal().events(event.command()).parallel().forEach(e -> {
                 try {
                     e.entitySerializer().index(endpoint.indexFactory(), e);
                 } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e1) {
                     log.error("Error while indexing", e);
                 }
             });
+            event.command().entitySerializer().index(endpoint.indexFactory(), event.command());
         }
 
     }
@@ -96,12 +98,12 @@ public class SinglePublisherService extends AbstractService implements Publisher
 
     private void complete(CommandEvent event, long sequence, boolean endOfBatch) {
         if (event.events() != null) {
-            event.completionHandler().accept(event.command().onCommandCompletion(endpoint, event.events()), event.events());
+            event.completionHandler().accept(event.command().onCommandCompletion(endpoint, event.eventsJournalled()), event.eventsJournalled());
         }
     }
 
 
-    private <T> void translate(CommandEvent event, long sequence, Triplet<Command<T>, BiConsumer<Optional<T>, List<Event>>, Consumer<Throwable>> message) {
+    private <T> void translate(CommandEvent event, long sequence, Triplet<Command<T>, BiConsumer<Optional<T>, Long>, Consumer<Throwable>> message) {
         event.
             command(message.getValue0()).
             completionHandler(((optional, events) -> message.getValue1().accept(optional, events))).
@@ -114,7 +116,8 @@ public class SinglePublisherService extends AbstractService implements Publisher
      * @param completionHandler Completion handler to be used once the command has been successfully processed
      * @param exceptionHandler Exception handler to be used if an exception get thrown while processing the command
      */
-    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, List<Event>> completionHandler, Consumer<Throwable> exceptionHandler) {
+    @Override
+    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler) {
         ringBuffer.publishEvent(this::translate, Triplet.with(command, completionHandler, exceptionHandler));
     }
 

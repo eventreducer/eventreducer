@@ -5,12 +5,13 @@ import org.eventreducer.hlc.NTPServerTimeProvider;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class EndpointTest {
 
     private static class TestCommand extends Command {
         @Override
-        public List<Event> events(Endpoint endpoint) throws Exception {
+        public Stream<Event> events(Endpoint endpoint) throws Exception {
             throw new Exception("exception");
         }
     }

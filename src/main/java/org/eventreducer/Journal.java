@@ -8,9 +8,9 @@ import org.eventreducer.hlc.HybridTimestamp;
 import org.eventreducer.hlc.PhysicalTimeProvider;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public abstract class Journal implements EndpointComponent {
 
@@ -23,25 +23,18 @@ public abstract class Journal implements EndpointComponent {
         this.timestamp = new HybridTimestamp(physicalTimeProvider);
     }
 
-    public void save(Command command, List<Event> events) throws Exception {
+    public long save(Command command, Stream<Event> events) throws Exception {
         TimeStamp commandTimestamp = new TimeStamp(timestamp.update());
         command.timestamp(commandTimestamp);
-        events.stream().
-                forEachOrdered(event -> {
-                    event.
-                            command(command).
-                            timestamp(new TimeStamp(timestamp.update()));
-                });
 
         if (!(command instanceof EphemeralCommand)) {
-            journal(command, events);
+            return  journal(command, events.map(event -> event.command(command).timestamp(new TimeStamp(timestamp.update()))));
         }
-        events.stream().forEachOrdered(event -> {
-            event.onEventJournaled(endpoint);
-        });
+
+        return 0;
     }
 
-    protected abstract void journal(Command command, List<Event> events);
+    protected abstract long journal(Command command, Stream<Event> events);
     public abstract long size(Class<? extends Identifiable> klass);
 
     public abstract Optional<Event> findEvent(UUID uuid);
@@ -49,4 +42,6 @@ public abstract class Journal implements EndpointComponent {
 
     public abstract Iterator<Event> eventIterator(Class<? extends Event> klass);
     public abstract Iterator<Command> commandIterator(Class<? extends Command> klass);
+
+    public abstract Stream<Event> events(Command command);
 }
