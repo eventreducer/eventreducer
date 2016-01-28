@@ -21,30 +21,41 @@ public class Endpoint extends AbstractService {
     @Getter @Setter
     private LockFactory lockFactory;
 
-    private CommandDisruptor commandDisruptor;
+    private PublisherService publisherService;
 
 
     public Endpoint() {
-        commandDisruptor = new CommandDisruptor(this);
+        this(new SinglePublisherService());
     }
-    public Endpoint(String packagePrefix) {
+
+    public Endpoint(PublisherService publisherService) {
+        this.publisherService = publisherService;
+        this.publisherService.setEndpoint(this);
+    }
+
+    public Endpoint(PublisherService publisherService, String packagePrefix) {
+        this(publisherService);
         this.packagePrefix = packagePrefix;
-        commandDisruptor = new CommandDisruptor(this);
+    }
+
+    public Endpoint(String packagePrefix) {
+        this();
+        this.packagePrefix = packagePrefix;
     }
 
     public Publisher publisher() {
-        return commandDisruptor;
+        return publisherService;
     }
 
     @Override
     protected void doStart() {
-        commandDisruptor.startAsync().awaitRunning();
+        publisherService.startAsync().awaitRunning();
         notifyStarted();
     }
 
     @Override
     protected void doStop() {
-        commandDisruptor.stopAsync().awaitTerminated();
+        publisherService.stopAsync().awaitTerminated();
         notifyStopped();
     }
 

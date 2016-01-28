@@ -22,13 +22,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Slf4j
-public class CommandDisruptor extends AbstractService implements Publisher {
+public class SinglePublisherService extends AbstractService implements PublisherService {
 
-    private final Endpoint endpoint;
-
-    public CommandDisruptor(Endpoint endpoint) {
-        this.endpoint = endpoint;
-    }
+    @Setter
+    private Endpoint endpoint;
 
     /**
      * CommandEvent encapsulates published Command along with the processing state
@@ -58,39 +55,6 @@ public class CommandDisruptor extends AbstractService implements Publisher {
          */
         @Getter @Setter
         private List<Event> events;
-    }
-
-    /**
-     * This exception wraps exceptions happened during event extraction step
-     * and include the original command for reference
-     */
-    public static class EventExtractionException extends Exception {
-
-        /**
-         * Original exception
-         */
-        @Getter
-        private final Throwable throwable;
-        /**
-         * Command that was being processed when the exception occurred
-         */
-        @Getter
-        private final Command command;
-
-        public EventExtractionException(Throwable throwable, Command command) {
-            this.throwable = throwable;
-            this.command = command;
-        }
-
-        @Override
-        public String getMessage() {
-            return "Exception " + throwable.getClass() + " during command " + command + " event extraction: " + throwable.getMessage();
-        }
-
-        @Override
-        public StackTraceElement[] getStackTrace() {
-            return throwable.getStackTrace();
-        }
     }
 
     public static final int RING_BUFFER_SIZE = 1024;
@@ -157,9 +121,10 @@ public class CommandDisruptor extends AbstractService implements Publisher {
     @Override
     @SneakyThrows
     protected void doStart() {
+        log.info("Starting single publisher");
+
         disruptor = new Disruptor<>(CommandEvent::new, RING_BUFFER_SIZE, DaemonThreadFactory.INSTANCE);
         disruptor.setDefaultExceptionHandler(new CommandEventExceptionHandler());
-
 
         List<EventHandler<CommandEvent>> eventHandlers =
                 Arrays.asList(this::extractEvents, this::journal, this::index, this::complete);
