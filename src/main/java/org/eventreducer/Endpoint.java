@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Accessors(fluent = true)
 @Slf4j
@@ -73,7 +74,15 @@ public class Endpoint extends AbstractService {
         serializers.parallelStream().forEach(t -> {
             try {
                 org.eventreducer.Serializer s = t.newInstance();
+                Class serializable = s.getClass().getAnnotation(org.eventreducer.annotations.Serializer.class).value();
+                log.info("{}: Configuring indices", serializable.getSimpleName());
+                long t0 = System.nanoTime();
                 s.configureIndices(indexFactory);
+                long t1 = System.nanoTime();
+                log.info("{}: Done configuring indices, elapsed time {} seconds, size: {}.",
+                        serializable.getSimpleName(),
+                        TimeUnit.SECONDS.convert(t1-t0, TimeUnit.NANOSECONDS), s.getIndex(indexFactory).size());
+
             } catch (InstantiationException | IllegalAccessException e) {
                 log.error("Error while initializing index factory", e);
             } catch (IndexFactory.IndexNotSupported indexNotSupported) {
