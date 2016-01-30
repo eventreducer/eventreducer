@@ -71,6 +71,7 @@ public class Endpoint extends AbstractService {
         this.indexFactory = indexFactory;
         Reflections reflections = packagePrefix == null ? new Reflections() : new Reflections(packagePrefix);
         Set<Class<? extends org.eventreducer.Serializer>> serializers = reflections.getSubTypesOf(org.eventreducer.Serializer.class);
+        long e0 = System.nanoTime();
         serializers.parallelStream().forEach(t -> {
             try {
                 org.eventreducer.Serializer s = t.newInstance();
@@ -89,6 +90,9 @@ public class Endpoint extends AbstractService {
                 log.error("Error while initializing index factory", indexNotSupported);
             }
         });
+        long e1 = System.nanoTime();
+        log.info("Index preparation is done, total time elapsed: {} seconds.",
+                TimeUnit.SECONDS.convert(e1-e0, TimeUnit.NANOSECONDS));
         return this;
     }
 
