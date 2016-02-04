@@ -6,36 +6,36 @@ import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ServiceManager;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
-public class MultiplePublisherService extends AbstractService implements PublisherService {
+public class MultiplePublisherService<T, C extends Command<T>> extends AbstractService implements PublisherService<T, C> {
 
-    private PublisherService[] publishers;
+    private Class<? extends Command> commandClass;
+    private List<PublisherService<T, C>> publishers;
     private ServiceManager serviceManager;
 
-    public MultiplePublisherService(int nPublishers) {
-        publishers = new PublisherService[nPublishers];
-        for (int i = 0; i < nPublishers; i++) {
-            publishers[i] = new SinglePublisherService();
+    public MultiplePublisherService(C command) {
+        commandClass = command.getClass();
+        publishers = new LinkedList<>();
+        for (int i = 0; i < ForkJoinPool.getCommonPoolParallelism(); i++) {
+            publishers.add(new SinglePublisherService<>(command));
         }
     }
 
-    public MultiplePublisherService() {
-        this(ForkJoinPool.getCommonPoolParallelism());
-    }
 
     @Override
     protected void doStart() {
-        log.info("Starting multiple publisher ({} instances)", publishers.length);
-        serviceManager = new ServiceManager(Arrays.asList(publishers));
+        log.debug("Starting multiple publisher {} ({} instances)", commandClass.getSimpleName(), publishers.size());
+        serviceManager = new ServiceManager(publishers);
         serviceManager.startAsync().awaitHealthy();
         notifyStarted();
     }
@@ -47,11 +47,11 @@ public class MultiplePublisherService extends AbstractService implements Publish
     }
 
     @Override
-    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler) {
+    public void publish(C command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler) {
         UUID uuid = command.uuid();
         HashCode hashCode = HashCode.fromBytes(Bytes.concat(Longs.toByteArray(uuid.getMostSignificantBits()), Longs.toByteArray(uuid.getLeastSignificantBits())));
-        int bucket = Hashing.consistentHash(hashCode, publishers.length);
-        publishers[bucket].publish(command, completionHandler, exceptionHandler);
+        int bucket = Hashing.consistentHash(hashCode, publishers.size());
+        publishers.get(bucket).publish(command, completionHandler, exceptionHandler);
     }
 
     @Override

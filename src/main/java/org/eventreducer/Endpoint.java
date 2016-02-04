@@ -1,14 +1,21 @@
 package org.eventreducer;
 
 import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.ServiceManager;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Accessors(fluent = true)
 @Slf4j
@@ -22,20 +29,20 @@ public class Endpoint extends AbstractService {
     @Getter @Setter
     private LockFactory lockFactory;
 
-    private PublisherService publisherService;
-
+    private Map<Class<? extends Command>, PublisherService<?, ?>> publisherServices = new HashMap<>();
+    private boolean multiplePublishers;
+    private ServiceManager serviceManager;
 
     public Endpoint() {
-        this(new SinglePublisherService());
+        this(false);
     }
 
-    public Endpoint(PublisherService publisherService) {
-        this.publisherService = publisherService;
-        this.publisherService.setEndpoint(this);
+    public Endpoint(boolean multiplePublishers) {
+        this.multiplePublishers = multiplePublishers;
     }
 
-    public Endpoint(PublisherService publisherService, String packagePrefix) {
-        this(publisherService);
+    public Endpoint(boolean multiple, String packagePrefix) {
+        this(multiple);
         this.packagePrefix = packagePrefix;
     }
 
@@ -44,19 +51,33 @@ public class Endpoint extends AbstractService {
         this.packagePrefix = packagePrefix;
     }
 
-    public Publisher publisher() {
-        return publisherService;
+    public <T, C extends Command<T>> CompletableFuture<Publisher.CommandPublished<T>> publish(C command) {
+        return publisher((Class<Command<T>>)command.getClass()).publish(command);
+    }
+
+    public <T, C extends Command<T>> Publisher<T, C> publisher(Class<C> klass) {
+        return (Publisher<T, C>) publisherServices.get(klass);
     }
 
     @Override
     protected void doStart() {
-        publisherService.startAsync().awaitRunning();
+        getCommands().forEach(new Consumer<Class<? extends Command>>() {
+            @Override @SneakyThrows
+            public void accept(Class<? extends Command> klass) {
+                PublisherService publisher = klass.newInstance().createPublisher(multiplePublishers);
+                publisher.setEndpoint(Endpoint.this);
+                publisherServices.put(klass, publisher);
+                assert publisherServices.containsKey(klass);
+            }
+        });
+        serviceManager = new ServiceManager(publisherServices.values());
+        serviceManager.startAsync().awaitHealthy();
         notifyStarted();
     }
 
     @Override
     protected void doStop() {
-        publisherService.stopAsync().awaitTerminated();
+        serviceManager.stopAsync().awaitStopped();
         notifyStopped();
     }
 
@@ -69,8 +90,7 @@ public class Endpoint extends AbstractService {
     public Endpoint indexFactory(IndexFactory indexFactory) {
         indexFactory.setJournal(journal());
         this.indexFactory = indexFactory;
-        Reflections reflections = packagePrefix == null ? new Reflections() : new Reflections(packagePrefix);
-        Set<Class<? extends org.eventreducer.Serializer>> serializers = reflections.getSubTypesOf(org.eventreducer.Serializer.class);
+        Set<Class<? extends Serializer>> serializers = getSerializers();
         long e0 = System.nanoTime();
         serializers.parallelStream().forEach(t -> {
             try {
@@ -94,6 +114,16 @@ public class Endpoint extends AbstractService {
         log.info("Index preparation is done, total time elapsed: {} seconds.",
                 TimeUnit.SECONDS.convert(e1-e0, TimeUnit.NANOSECONDS));
         return this;
+    }
+
+    private Set<Class<? extends Serializer>> getSerializers() {
+        Reflections reflections = packagePrefix == null ? new Reflections() : new Reflections(packagePrefix);
+        return reflections.getSubTypesOf(Serializer.class);
+    }
+
+    private Set<Class<? extends Command>> getCommands() {
+        return getSerializers().stream().map(s -> s.getAnnotation(org.eventreducer.annotations.Serializer.class).
+                value()).filter(Command.class::isAssignableFrom).map(c -> (Class<? extends Command>)c).collect(Collectors.toSet());
     }
 
 

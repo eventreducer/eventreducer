@@ -1,6 +1,7 @@
 package org.eventreducer;
 
 import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.RingBuffer;
@@ -18,13 +19,15 @@ import org.javatuples.Triplet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Slf4j
-public class SinglePublisherService extends AbstractService implements PublisherService {
+public class SinglePublisherService<T, C extends Command<T>> extends AbstractService implements PublisherService<T, C> {
 
+    private final Class<? extends Command> commandClass;
     @Setter
     private Endpoint endpoint;
 
@@ -34,18 +37,18 @@ public class SinglePublisherService extends AbstractService implements Publisher
      */
     @NoArgsConstructor
     @Accessors(fluent = true)
-    private static class CommandEvent {
+    private class CommandEvent {
         /**
          * Originally supplied command
          */
         @Getter @Setter
-        private Command command;
+        private C command;
 
         /**
          * Completion handler, supplied during publishing
          */
         @Getter @Setter
-        private BiConsumer<Optional, Long> completionHandler;
+        private BiConsumer<Optional<T>, Long> completionHandler;
         /**
          * Exception handler, supplied during publishing
          */
@@ -103,7 +106,7 @@ public class SinglePublisherService extends AbstractService implements Publisher
     }
 
 
-    private <T> void translate(CommandEvent event, long sequence, Triplet<Command<T>, BiConsumer<Optional<T>, Long>, Consumer<Throwable>> message) {
+    private void translate(CommandEvent event, long sequence, Triplet<C, BiConsumer<Optional<T>, Long>, Consumer<Throwable>> message) {
         event.
             command(message.getValue0()).
             completionHandler(((optional, events) -> message.getValue1().accept(optional, events))).
@@ -117,16 +120,22 @@ public class SinglePublisherService extends AbstractService implements Publisher
      * @param exceptionHandler Exception handler to be used if an exception get thrown while processing the command
      */
     @Override
-    public <T> void publish(Command<T> command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler) {
+    public void publish(C command, BiConsumer<Optional<T>, Long> completionHandler, Consumer<Throwable> exceptionHandler) {
         ringBuffer.publishEvent(this::translate, Triplet.with(command, completionHandler, exceptionHandler));
+    }
+
+    public SinglePublisherService(C command) {
+        commandClass = command.getClass();
     }
 
     @Override
     @SneakyThrows
     protected void doStart() {
-        log.info("Starting single publisher");
+        log.debug("Starting single publisher {}", commandClass.getSimpleName());
 
-        disruptor = new Disruptor<>(CommandEvent::new, RING_BUFFER_SIZE, DaemonThreadFactory.INSTANCE);
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("eventreducer-" + commandClass.getSimpleName() +"-%d").setDaemon(true).build();
+
+        disruptor = new Disruptor<>(CommandEvent::new, RING_BUFFER_SIZE, threadFactory);
         disruptor.setDefaultExceptionHandler(new CommandEventExceptionHandler());
 
         List<EventHandler<CommandEvent>> eventHandlers =
@@ -149,7 +158,7 @@ public class SinglePublisherService extends AbstractService implements Publisher
         notifyStopped();
     }
 
-    private static class CommandEventExceptionHandler implements ExceptionHandler<CommandEvent> {
+    private class CommandEventExceptionHandler implements ExceptionHandler<CommandEvent> {
         @Override
         public void handleEventException(Throwable ex, long sequence, CommandEvent event) {
             event.exceptionHandler().accept(ex);

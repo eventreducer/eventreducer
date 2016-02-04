@@ -25,7 +25,7 @@ public class EndpointTest {
         Endpoint endpoint = new Endpoint().journal(journal);
         endpoint.startAsync().awaitRunning();
 
-        Publisher publisher = endpoint.publisher();
+        Publisher publisher = endpoint.publisher(TestCommand.class);
         publisher.publish(new TestCommand(), (optional, events) -> {
             System.out.println(optional);
         }, System.out::println);

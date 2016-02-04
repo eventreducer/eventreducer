@@ -57,4 +57,8 @@ public abstract class Command<T> extends Serializable implements Identifiable {
     public Optional<T> onCommandCompletion(Endpoint endpoint, long events) {
         return Optional.empty();
     }
+
+    <C extends Command<T>> PublisherService<T, C> createPublisher(boolean multiple) {
+        return multiple ? new MultiplePublisherService<>((C) this) : new SinglePublisherService<>((C) this);
+    }
 }
