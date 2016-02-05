@@ -2,9 +2,7 @@ package org.eventreducer;
 
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ServiceManager;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
@@ -13,54 +11,97 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Endpoint is the main interface for all eventreducer functionality
+ */
 @Accessors(fluent = true)
 @Slf4j
 public class Endpoint extends AbstractService {
 
+    /**
+     *  Package tree in which commands and events are searched for. All packages will be scanned
+     *  if this parameter is omitted (can take a few seconds or more).
+     */
+    @Getter
     private String packagePrefix;
+    /**
+     * Journal implementation
+     */
     @Getter
     private Journal journal;
+    /**
+     * Index factory implementation
+     */
     @Getter
     private IndexFactory indexFactory;
-    @Getter @Setter
+    /**
+     * Lock factory implementation
+     */
+    @Getter
     private LockFactory lockFactory;
 
-    private Map<Class<? extends Command>, PublisherService<?, ?>> publisherServices = new HashMap<>();
-    private boolean multiplePublishers;
-    private ServiceManager serviceManager;
+    /**
+     * If true, multiple ({@link ForkJoinPool#getCommonPoolParallelism()}) instances of
+     *                           SinglePublisherService will be started for each command, and incoming commands will be
+     *                           distributed amongst instances using consistent hashing of their UUIDs. <code>false</code> by default.
+     */
+    private boolean multiplePublishers = false;
 
-    public Endpoint() {
-        this(false);
-    }
-
-    public Endpoint(boolean multiplePublishers) {
+    /**
+     * @param packagePrefix Package tree in which commands and events are searched for. All packages will be scanned
+     *                      if this parameter is omitted (can take a few seconds or more).
+     * @param journal Journal implementation
+     * @param indexFactory Index factory implementation
+     * @param lockFactory Lock factory implementation
+     * @param multiplePublishers If true, multiple ({@link ForkJoinPool#getCommonPoolParallelism()}) instances of
+     *                           SinglePublisherService will be started for each command, and incoming commands will be
+     *                           distributed amongst instances using consistent hashing of their UUIDs. <code>false</code> by default.
+     */
+    @Builder
+    private Endpoint(String packagePrefix, @NonNull Journal journal, @NonNull IndexFactory indexFactory, @NonNull LockFactory lockFactory, boolean multiplePublishers) {
+        this.packagePrefix = packagePrefix;
+        this.journal = journal;
+        this.indexFactory = indexFactory;
+        this.lockFactory = lockFactory;
         this.multiplePublishers = multiplePublishers;
     }
 
-    public Endpoint(boolean multiple, String packagePrefix) {
-        this(multiple);
-        this.packagePrefix = packagePrefix;
-    }
+    private Map<Class<? extends Command>, PublisherService<?, ?>> publisherServices = new HashMap<>();
+    private ServiceManager serviceManager;
 
-    public Endpoint(String packagePrefix) {
-        this();
-        this.packagePrefix = packagePrefix;
-    }
 
+    /**
+     * Main command publishing interface
+     * @param command Command to be published
+     * @param <T> Command return type
+     * @param <C> Command type
+     * @return A completable future containing command's return value and a number of events created
+     */
     public <T, C extends Command<T>> CompletableFuture<Publisher.CommandPublished<T>> publish(C command) {
         return publisher((Class<Command<T>>)command.getClass()).publish(command);
     }
 
+    /**
+     * Secondary publishing interface, exposes full {@link Publisher} interface
+     * @param klass Command class
+     * @param <T> Command return type
+     * @param <C> Command type
+     * @return A corresponding {@link Publisher} interfsce
+     */
     public <T, C extends Command<T>> Publisher<T, C> publisher(Class<C> klass) {
         return (Publisher<T, C>) publisherServices.get(klass);
     }
 
     @Override
     protected void doStart() {
+        journal.endpoint(this);
+        indexFactory.setJournal(journal);
+        initializeIndices();
         getCommands().forEach(new Consumer<Class<? extends Command>>() {
             @Override @SneakyThrows
             public void accept(Class<? extends Command> klass) {
@@ -75,26 +116,12 @@ public class Endpoint extends AbstractService {
         notifyStarted();
     }
 
-    @Override
-    protected void doStop() {
-        serviceManager.stopAsync().awaitStopped();
-        notifyStopped();
-    }
-
-    public Endpoint journal(Journal journal) {
-        this.journal = journal;
-        journal.endpoint(this);
-        return this;
-    }
-
-    public Endpoint indexFactory(IndexFactory indexFactory) {
-        indexFactory.setJournal(journal());
-        this.indexFactory = indexFactory;
+    private void initializeIndices() {
         Set<Class<? extends Serializer>> serializers = getSerializers();
         long e0 = System.nanoTime();
         serializers.parallelStream().forEach(t -> {
             try {
-                org.eventreducer.Serializer s = t.newInstance();
+                Serializer s = t.newInstance();
                 Class serializable = s.getClass().getAnnotation(org.eventreducer.annotations.Serializer.class).value();
                 log.info("{}: Configuring indices", serializable.getSimpleName());
                 long t0 = System.nanoTime();
@@ -113,7 +140,12 @@ public class Endpoint extends AbstractService {
         long e1 = System.nanoTime();
         log.info("Index preparation is done, total time elapsed: {} seconds.",
                 TimeUnit.SECONDS.convert(e1-e0, TimeUnit.NANOSECONDS));
-        return this;
+    }
+
+    @Override
+    protected void doStop() {
+        serviceManager.stopAsync().awaitStopped();
+        notifyStopped();
     }
 
     private Set<Class<? extends Serializer>> getSerializers() {

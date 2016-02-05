@@ -24,7 +24,7 @@ public class EndpointTest {
         NTPServerTimeProvider timeProvider = new NTPServerTimeProvider();
         timeProvider.startAsync().awaitRunning();
         MemoryJournal journal = new MemoryJournal(timeProvider);
-        Endpoint endpoint = new Endpoint().journal(journal);
+        Endpoint endpoint = Endpoint.builder().journal(journal).build();
         endpoint.startAsync().awaitRunning();
 
         Publisher publisher = endpoint.publisher(TestCommand.class);

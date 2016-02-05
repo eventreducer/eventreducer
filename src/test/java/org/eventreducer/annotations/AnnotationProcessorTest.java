@@ -36,7 +36,7 @@ public class AnnotationProcessorTest {
     @Test
     @SneakyThrows
     public void testIndexing() {
-        Endpoint endpoint = new Endpoint().journal(new MemoryJournal(new NTPServerTimeProvider())).indexFactory(new MemoryIndexFactory());
+        Endpoint endpoint = Endpoint.builder().journal(new MemoryJournal(new NTPServerTimeProvider())).indexFactory(new MemoryIndexFactory()).build();
         endpoint.startAsync().awaitRunning();
 
         TestEvent testEvent = new TestEvent();

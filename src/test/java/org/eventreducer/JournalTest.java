@@ -25,7 +25,7 @@ public class JournalTest {
         physicalTimeProvider.startAsync().awaitRunning();
 
         MemoryJournal memoryJournal = new MemoryJournal(physicalTimeProvider);
-        new Endpoint().journal(memoryJournal);
+        Endpoint.builder().journal(memoryJournal).build();
 
         return Arrays.asList(memoryJournal);
     }
