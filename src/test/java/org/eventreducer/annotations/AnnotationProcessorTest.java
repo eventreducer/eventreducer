@@ -7,6 +7,8 @@ import lombok.SneakyThrows;
 import org.eventreducer.Endpoint;
 import org.eventreducer.Event;
 import org.eventreducer.MemoryIndexFactory;
+import org.eventreducer.MemoryJournal;
+import org.eventreducer.hlc.NTPServerTimeProvider;
 import org.junit.Test;
 
 import static com.googlecode.cqengine.query.QueryFactory.*;
@@ -14,13 +16,13 @@ import static org.junit.Assert.assertEquals;
 
 public class AnnotationProcessorTest {
 
-    static class TestEvent extends Event {
+    public static class TestEvent extends Event {
         @Property
-        String str;
+        public String str;
         @Property
-        int i;
+        public int i;
         @Property
-        int[] c;
+        public int[] c;
 
         @Index
         public static final SimpleAttribute<TestEvent, String> STR = new SimpleAttribute<TestEvent, String>() {
@@ -34,7 +36,8 @@ public class AnnotationProcessorTest {
     @Test
     @SneakyThrows
     public void testIndexing() {
-        Endpoint endpoint = new Endpoint().indexFactory(new MemoryIndexFactory());
+        Endpoint endpoint = new Endpoint().journal(new MemoryJournal(new NTPServerTimeProvider())).indexFactory(new MemoryIndexFactory());
+        endpoint.startAsync().awaitRunning();
 
         TestEvent testEvent = new TestEvent();
         testEvent.str = "test";

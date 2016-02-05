@@ -1,6 +1,7 @@
 package org.eventreducer;
 
 import lombok.SneakyThrows;
+import org.eventreducer.annotations.*;
 import org.eventreducer.hlc.NTPServerTimeProvider;
 import org.junit.Test;
 
@@ -9,7 +10,8 @@ import java.util.stream.Stream;
 
 public class EndpointTest {
 
-    private static class TestCommand extends Command {
+    @org.eventreducer.annotations.Serializable
+    public static class TestCommand extends Command<Void> {
         @Override
         public Stream<Event> events(Endpoint endpoint) throws Exception {
             throw new Exception("exception");
