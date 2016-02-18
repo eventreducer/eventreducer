@@ -43,14 +43,12 @@ public abstract class IndexFactory implements EndpointComponent {
     protected abstract List<Triplet<String, IndexFeature[], Function<Attribute, Index>>> getIndexMatrix();
 
     public <A, O> Index<A> getIndexOnAttribute(Attribute<A, O> attribute, IndexFeature...features) throws IndexNotSupported {
-        java.util.Optional<Triplet<String, IndexFeature[], Function<Attribute, Index>>> first = getIndexMatrix().stream().
-                filter(triplet -> Arrays.asList(triplet.getValue1()).containsAll(Arrays.asList(features))).
-                findFirst();
-        if (first.isPresent()) {
-            return first.get().getValue2().apply(attribute);
-        } else {
-            throw new IndexNotSupported();
+        for (Triplet<String, IndexFeature[], Function<Attribute, Index>> triplet : getIndexMatrix()) {
+            if (Arrays.asList(triplet.getValue1()).containsAll(Arrays.asList(features))) {
+                return triplet.getValue2().apply(attribute);
+            }
         }
+        throw new IndexNotSupported();
     }
 
     public static class IndexNotSupported extends Exception {
