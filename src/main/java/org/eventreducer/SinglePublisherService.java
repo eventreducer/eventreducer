@@ -17,8 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.javatuples.Triplet;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -86,13 +88,15 @@ public class SinglePublisherService<T, C extends Command<T>> extends AbstractSer
 
     private void index(CommandEvent event, long sequence, boolean endOfBatch) throws Exception {
         if (event.eventsJournalled() != -1) {
-            endpoint.journal().events(event.command()).parallel().forEach(e -> {
+            Iterator<Event> iterator = endpoint.journal().events(event.command()).iterator();
+            while (iterator.hasNext()) {
+                Event e = iterator.next();
                 try {
                     e.entitySerializer().index(endpoint.indexFactory(), e);
                 } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e1) {
                     log.error("Error while indexing", e);
                 }
-            });
+            }
             event.command().entitySerializer().index(endpoint.indexFactory(), event.command());
         }
 
@@ -109,7 +113,7 @@ public class SinglePublisherService<T, C extends Command<T>> extends AbstractSer
     private void translate(CommandEvent event, long sequence, Triplet<C, BiConsumer<Optional<T>, Long>, Consumer<Throwable>> message) {
         event.
             command(message.getValue0()).
-            completionHandler(((optional, events) -> message.getValue1().accept(optional, events))).
+            completionHandler(message.getValue1()).
             exceptionHandler(message.getValue2());
     }
 
