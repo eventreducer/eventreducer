@@ -161,8 +161,8 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                     for (Element element : elements) {
                         if (element.asType().getKind() == TypeKind.DECLARED &&
                                 processingEnv.getTypeUtils().asElement(element.asType()).getKind() == ElementKind.ENUM) {
-                            deserializeBuilder.addCode("entity.$L = $T.values()[deserialize(entity.$L.ordinal(), buffer)];\n",
-                                    element.getSimpleName().toString(), ClassName.get(element.asType()), element.getSimpleName().toString());
+                            deserializeBuilder.addCode("entity.$L = $T.values()[deserialize((int) 0, buffer)];\n",
+                                    element.getSimpleName().toString(), ClassName.get(element.asType()));
                         } else {
                             deserializeBuilder.addCode("entity.$L = deserialize(entity.$L, buffer);\n", element.getSimpleName().toString(), element.getSimpleName().toString());
                         }
