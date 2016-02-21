@@ -293,6 +293,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(String s) {
+        if (s == null) {
+            return 4;
+        }
         return s.getBytes().length + 4;
     }
 
