@@ -4,6 +4,8 @@ import com.googlecode.cqengine.attribute.SimpleAttribute;
 import com.googlecode.cqengine.index.Index;
 import com.googlecode.cqengine.persistence.Persistence;
 import com.googlecode.cqengine.query.option.QueryOptions;
+import org.eventreducer.annotations.*;
+import org.eventreducer.annotations.Serializable;
 
 import java.sql.Connection;
 import java.util.Collection;
@@ -74,12 +76,12 @@ public class JournalPersistence<O extends Identifiable> implements Persistence<O
 
         @Override
         public int size() {
-            return (int) journal.size(klass);
+            return (int) journal.size((Class<? extends org.eventreducer.Serializable>) klass);
         }
 
         @Override
         public boolean isEmpty() {
-            return size() == 0;
+            return journal.isEmpty((Class<? extends org.eventreducer.Serializable>) klass);
         }
 
         @Override

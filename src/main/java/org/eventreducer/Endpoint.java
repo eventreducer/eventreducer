@@ -127,9 +127,9 @@ public class Endpoint extends AbstractService {
                 long t0 = System.nanoTime();
                 s.configureIndices(indexFactory);
                 long t1 = System.nanoTime();
-                log.info("{}: Done configuring indices, elapsed time {} seconds, size: {}.",
+                log.info("{}: Done configuring indices, elapsed time {} seconds.",
                         serializable.getSimpleName(),
-                        TimeUnit.SECONDS.convert(t1-t0, TimeUnit.NANOSECONDS), s.getIndex(indexFactory).size());
+                        TimeUnit.SECONDS.convert(t1-t0, TimeUnit.NANOSECONDS));
 
             } catch (InstantiationException | IllegalAccessException e) {
                 log.error("Error while initializing index factory", e);
@@ -156,6 +156,11 @@ public class Endpoint extends AbstractService {
     private Set<Class<? extends Command>> getCommands() {
         return getSerializers().stream().map(s -> s.getAnnotation(org.eventreducer.annotations.Serializer.class).
                 value()).filter(Command.class::isAssignableFrom).map(c -> (Class<? extends Command>)c).collect(Collectors.toSet());
+    }
+
+    public Set<Class<? extends Serializable>> getSerializables() {
+        return getSerializers().stream().map(s -> s.getAnnotation(org.eventreducer.annotations.Serializer.class).
+                value()).map(c -> (Class<? extends Serializable>)c).collect(Collectors.toSet());
     }
 
 

@@ -22,7 +22,7 @@ public class MemoryJournal extends Journal {
     }
 
     @Override
-    public long size(Class<? extends Identifiable> klass) {
+    public long size(Class<? extends Serializable> klass) {
         return storage.values().stream().filter(e -> klass.isAssignableFrom(e.getClass())).collect(Collectors.toList()).size() +
                commands.values().stream().filter(e -> klass.isAssignableFrom(e.getClass())).collect(Collectors.toList()).size();
     }

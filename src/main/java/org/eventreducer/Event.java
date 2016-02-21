@@ -11,8 +11,16 @@ import java.util.UUID;
  */
 public abstract class Event extends Serializable implements Identifiable {
 
-    @Getter @Setter @Accessors(fluent = true)
-    private UUID uuid = UUID.randomUUID();
+
+    @Setter @Accessors(fluent = true)
+    private UUID uuid;
+
+    public UUID uuid() {
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
+        }
+        return uuid;
+    }
 
     @Getter @Setter @Accessors(fluent = true)
     private TimeStamp timestamp;

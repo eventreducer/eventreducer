@@ -22,10 +22,14 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,7 +80,7 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
         private void generateSerializer() {
             properties.forEach((enclosing, elements) -> {
                 try {
-                    byte[] ripemdHash = computeLayoutHash(elements);
+                    byte[] ripemdHash = computeLayoutHash(enclosing, elements);
 
                     FieldSpec hashField = FieldSpec.builder(byte[].class, "hash", Modifier.PRIVATE, Modifier.FINAL, Modifier.STATIC).
                             initializer("$T.getDecoder().decode($S)", Base64.class, Base64.getEncoder().encodeToString(ripemdHash)).
@@ -134,6 +138,55 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                         });
                     }
 
+                    MethodSpec.Builder serializeBuilder = MethodSpec.methodBuilder("serialize").
+                            addModifiers(Modifier.PUBLIC).
+                            addParameter(ClassName.get(enclosing), "entity").
+                            addParameter(ByteBuffer.class, "buffer");
+
+                    for (Element element : elements) {
+                        if (element.asType().getKind() == TypeKind.DECLARED &&
+                            processingEnv.getTypeUtils().asElement(element.asType()).getKind() == ElementKind.ENUM) {
+                            serializeBuilder.addCode("serialize(entity.$L.ordinal(), buffer);\n", element.getSimpleName().toString());
+                        } else {
+                            serializeBuilder.addCode("serialize(entity.$L, buffer);\n", element.getSimpleName().toString());
+                        }
+                    }
+
+                    MethodSpec.Builder deserializeBuilder = MethodSpec.methodBuilder("deserialize").
+                            addModifiers(Modifier.PUBLIC).
+                            returns(ClassName.get(enclosing)).
+                            addParameter(ByteBuffer.class, "buffer").
+                            addCode("$T entity = new $T();\n", ClassName.get(enclosing), ClassName.get(enclosing));
+
+                    for (Element element : elements) {
+                        if (element.asType().getKind() == TypeKind.DECLARED &&
+                                processingEnv.getTypeUtils().asElement(element.asType()).getKind() == ElementKind.ENUM) {
+                            deserializeBuilder.addCode("entity.$L = $T.values()[deserialize(entity.$L.ordinal(), buffer)];\n",
+                                    element.getSimpleName().toString(), ClassName.get(element.asType()), element.getSimpleName().toString());
+                        } else {
+                            deserializeBuilder.addCode("entity.$L = deserialize(entity.$L, buffer);\n", element.getSimpleName().toString(), element.getSimpleName().toString());
+                        }
+                    }
+
+                    deserializeBuilder.addCode("return entity;\n");
+
+                    MethodSpec.Builder sizeBuilder = MethodSpec.methodBuilder("size").
+                            addModifiers(Modifier.PUBLIC).
+                            returns(TypeName.INT).
+                            addParameter(ClassName.get(enclosing), "entity").
+                            addCode("int sz = 0;\n");
+
+                    for (Element element : elements) {
+                        if (element.asType().getKind() == TypeKind.DECLARED &&
+                                processingEnv.getTypeUtils().asElement(element.asType()).getKind() == ElementKind.ENUM) {
+                            sizeBuilder.addCode("sz += size(entity.$L.ordinal());\n", element.getSimpleName().toString());
+                        } else {
+                            sizeBuilder.addCode("sz += size(entity.$L);\n", element.getSimpleName().toString());
+                        }
+                    }
+
+                    sizeBuilder.addCode("return sz;\n");
+
                     String serializerClassName = enclosing.getSimpleName().toString() + "Serializer";
                     TypeSpec serializer = TypeSpec.classBuilder(serializerClassName).
                             addModifiers(Modifier.PUBLIC, Modifier.FINAL).
@@ -145,6 +198,9 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
                             addMethod(getIndex).
                             addMethod(index).
                             addMethod(configureIndicesBuilder.build()).
+                            addMethod(serializeBuilder.build()).
+                            addMethod(deserializeBuilder.build()).
+                            addMethod(sizeBuilder.build()).
                             build();
 
                     JavaFile klass = JavaFile.builder(processingEnv.getElementUtils().getPackageOf(enclosing).toString(), serializer).build();
@@ -223,8 +279,9 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
             }
         }
 
-        private byte[] computeLayoutHash(List<Element> elements) {
+        private byte[] computeLayoutHash(TypeElement enclosure, List<Element> elements) {
             Hasher hasher = Hashing.sha256().newHasher();
+            hasher.putString(ClassName.get(enclosure).toString(), Charsets.UTF_8);
             elements.stream().forEachOrdered(element -> {
                 hasher.putString(element.getSimpleName(), Charsets.UTF_8);
                 try {

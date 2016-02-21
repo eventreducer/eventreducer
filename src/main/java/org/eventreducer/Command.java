@@ -1,7 +1,9 @@
 package org.eventreducer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import org.apache.commons.net.ntp.TimeStamp;
 
@@ -19,11 +21,28 @@ import java.util.stream.Stream;
 @Accessors(fluent = true)
 public abstract class Command<T> extends Serializable implements Identifiable {
 
-    @Getter @Setter
-    public Object trace;
+    public String trace = "null";
 
-    @Getter @Setter @Accessors(fluent = true)
-    private UUID uuid = UUID.randomUUID();
+    @SneakyThrows
+    public Object trace() {
+        return new ObjectMapper().readValue(trace, Object.class);
+    }
+
+    @SneakyThrows
+    public Command<T> trace(Object o) {
+        trace = new ObjectMapper().writeValueAsString(o);
+        return this;
+    }
+
+    @Setter @Accessors(fluent = true)
+    private UUID uuid;
+
+    public UUID uuid() {
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
+        }
+        return uuid;
+    }
 
     @Getter @Setter @Accessors(fluent = true)
     private TimeStamp timestamp;

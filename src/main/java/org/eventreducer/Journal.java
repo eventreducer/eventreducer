@@ -23,6 +23,7 @@ public abstract class Journal implements EndpointComponent {
         this.timestamp = new HybridTimestamp(physicalTimeProvider);
     }
 
+
     public long save(Command command, Stream<Event> events) throws Exception {
         TimeStamp commandTimestamp = new TimeStamp(timestamp.update());
         command.timestamp(commandTimestamp);
@@ -35,7 +36,7 @@ public abstract class Journal implements EndpointComponent {
     }
 
     protected abstract long journal(Command command, Stream<Event> events);
-    public abstract long size(Class<? extends Identifiable> klass);
+    public abstract long size(Class<? extends Serializable> klass);
 
     public abstract Optional<Event> findEvent(UUID uuid);
     public abstract Optional<Command> findCommand(UUID uuid);
@@ -44,4 +45,8 @@ public abstract class Journal implements EndpointComponent {
     public abstract Iterator<Command> commandIterator(Class<? extends Command> klass);
 
     public abstract Stream<Event> events(Command command);
+
+    public boolean isEmpty(Class<? extends Serializable> klass) {
+        return size(klass) == 0;
+    }
 }
