@@ -31,8 +31,12 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(byte[] b, ByteBuffer buffer) {
-        buffer.putInt(b.length);
-        buffer.put(b);
+        if (b == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(b.length);
+            buffer.put(b);
+        }
     }
 
     protected byte[] deserialize(byte[] b, ByteBuffer buffer) {
@@ -43,6 +47,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(byte[] b) {
+        if (b == null) {
+            return 4;
+        }
         return b.length + 4;
     }
 
@@ -59,9 +66,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(short[] s, ByteBuffer buffer) {
-        buffer.putInt(s.length);
-        for (short v : s) {
-            buffer.putShort(v);
+        if (s == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(s.length);
+            for (short v : s) {
+                buffer.putShort(v);
+            }
         }
     }
 
@@ -75,7 +86,10 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(short[] s) {
-        return 2*s.length + 4;
+        if (s == null) {
+            return 4;
+        }
+        return 2 * s.length + 4;
     }
 
 
@@ -92,9 +106,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(int[] i, ByteBuffer buffer) {
-        buffer.putInt(i.length);
-        for (int v : i) {
-            buffer.putInt(v);
+        if (i == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(i.length);
+            for (int v : i) {
+                buffer.putInt(v);
+            }
         }
     }
 
@@ -108,7 +126,10 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(int[] i) {
-        return 4*i.length + 4;
+        if (i == null) {
+            return 4;
+        }
+        return 4 * i.length + 4;
     }
 
 
@@ -125,9 +146,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(long[] l, ByteBuffer buffer) {
-        buffer.putInt(l.length);
-        for (long v : l) {
-            buffer.putLong(v);
+        if (l == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(l.length);
+            for (long v : l) {
+                buffer.putLong(v);
+            }
         }
     }
 
@@ -141,6 +166,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(long[] l) {
+        if (l == null) {
+            return 4;
+        }
         return 8*l.length + 4;
     }
 
@@ -158,9 +186,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(float[] f, ByteBuffer buffer) {
-        buffer.putInt(f.length);
-        for (float v : f) {
-            buffer.putFloat(v);
+        if (f == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(f.length);
+            for (float v : f) {
+                buffer.putFloat(v);
+            }
         }
     }
 
@@ -174,6 +206,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(float[] f) {
+        if (f == null) {
+            return 4;
+        }
         return 4*f.length + 4;
     }
 
@@ -191,9 +226,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(double[] d, ByteBuffer buffer) {
-        buffer.putInt(d.length);
-        for (double v : d) {
-            buffer.putDouble(v);
+        if (d == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(d.length);
+            for (double v : d) {
+                buffer.putDouble(v);
+            }
         }
     }
 
@@ -207,6 +246,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(double[] d) {
+        if (d == null) {
+            return 4;
+        }
         return 8*d.length + 4;
     }
 
@@ -224,9 +266,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(boolean[] b, ByteBuffer buffer) {
-        buffer.putInt(b.length);
-        for (boolean v : b) {
-            buffer.put((byte) (v ? 1 : 0));
+        if (b == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(b.length);
+            for (boolean v : b) {
+                buffer.put((byte) (v ? 1 : 0));
+            }
         }
     }
 
@@ -240,6 +286,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(boolean[] b) {
+        if (b == null) {
+            return 4;
+        }
         return b.length + 4;
     }
 
@@ -257,9 +306,13 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(char[] c, ByteBuffer buffer) {
-        buffer.putInt(c.length);
-        for (char v : c) {
-            buffer.putChar(v);
+        if (c == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(c.length);
+            for (char v : c) {
+                buffer.putChar(v);
+            }
         }
     }
 
@@ -273,6 +326,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(char[] c) {
+        if (c == null) {
+            return 4;
+        }
         return c.length + 4;
     }
 
@@ -300,11 +356,15 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected void serialize(String s[], ByteBuffer buffer) {
-        buffer.putInt(s.length);
-        for (String v : s) {
-            byte[] bytes = v.getBytes();
-            buffer.putInt(bytes.length);
-            buffer.put(bytes);
+        if (s == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(s.length);
+            for (String v : s) {
+                byte[] bytes = v.getBytes();
+                buffer.putInt(bytes.length);
+                buffer.put(bytes);
+            }
         }
     }
 
@@ -318,6 +378,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(String[] s) {
+        if (s == null) {
+            return 4;
+        }
         int sz = 0;
         for (String v : s) {
             sz += size(v);
@@ -348,13 +411,17 @@ public abstract class Serializer<T extends Serializable> {
 
 
     protected void serialize(UUID uuid[], ByteBuffer buffer) {
-        buffer.putInt(uuid.length);
-        for (UUID v : uuid) {
-            if (uuid == null) {
-                serialize(new UUID(0, 0), buffer);
-            } else {
-                buffer.putLong(v.getMostSignificantBits());
-                buffer.putLong(v.getLeastSignificantBits());
+        if (uuid == null) {
+            buffer.putInt(0);
+        } else {
+            buffer.putInt(uuid.length);
+            for (UUID v : uuid) {
+                if (uuid == null) {
+                    serialize(new UUID(0, 0), buffer);
+                } else {
+                    buffer.putLong(v.getMostSignificantBits());
+                    buffer.putLong(v.getLeastSignificantBits());
+                }
             }
         }
     }
@@ -369,6 +436,9 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(UUID[] uuid) {
+        if (uuid == null) {
+            return 4;
+        }
         return 16*uuid.length + 4;
     }
 
