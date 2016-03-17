@@ -302,14 +302,14 @@ public abstract class Serializer<T extends Serializable> {
     }
 
     protected int size(char c) {
-        return 1;
+        return 2;
     }
 
     protected void serialize(char[] c, ByteBuffer buffer) {
         if (c == null) {
             buffer.putInt(0);
         } else {
-            buffer.putInt(c.length);
+            buffer.putInt(c.length * 2);
             for (char v : c) {
                 buffer.putChar(v);
             }
@@ -329,14 +329,14 @@ public abstract class Serializer<T extends Serializable> {
         if (c == null) {
             return 4;
         }
-        return c.length + 4;
+        return c.length * 2 + 4;
     }
 
     protected void serialize(String s, ByteBuffer buffer) {
         if (s == null) {
             buffer.putInt(0);
         } else {
-            buffer.putInt(s.length());
+            buffer.putInt(s.getBytes().length);
             buffer.put(s.getBytes());
         }
     }

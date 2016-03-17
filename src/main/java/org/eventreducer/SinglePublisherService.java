@@ -74,6 +74,7 @@ public class SinglePublisherService<T, C extends Command<T>> extends AbstractSer
         try {
             event.events(event.command().events(endpoint));
         } catch (Exception e) {
+            e.printStackTrace();
             throw new EventExtractionException(e, event.command());
         }
     }
